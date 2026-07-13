@@ -61,7 +61,7 @@ export default function MarketDetail() {
             </div>
             <span className="inline-flex items-center gap-2 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1 text-xs text-emerald-100">
               <Radio className="h-3.5 w-3.5" />
-              实时更新
+              {data.liveMode === "daily_snapshot" ? "定时刷新" : "实时更新"}
             </span>
           </div>
           <LineChart points={data.timelinePreview} className="h-72" />

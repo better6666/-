@@ -6,6 +6,8 @@
   "scripts": {
     "client:dev": "vite",
     "build": "tsc -b && vite build",
+    "build:pages": "npm run generate:static-data && tsc -b && VITE_DATA_MODE=static vite build --base=/-/",
+    "generate:static-data": "tsx scripts/generateStaticData.ts",
     "lint": "eslint .",
     "preview": "vite preview",
     "check": "tsc --noEmit",

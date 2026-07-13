@@ -4,6 +4,9 @@ import type {
   MarketsResponse,
 } from "@shared/market";
 
+const isStaticDataMode = import.meta.env.VITE_DATA_MODE === "static";
+const baseUrl = import.meta.env.BASE_URL;
+
 async function request<T>(path: string): Promise<T> {
   const response = await fetch(path);
 
@@ -14,14 +17,30 @@ async function request<T>(path: string): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export const fetchMarkets = () => request<MarketsResponse>("/api/markets");
+export const fetchMarkets = () =>
+  request<MarketsResponse>(
+    isStaticDataMode ? `${baseUrl}data/markets.json` : "/api/markets",
+  );
 
 export const fetchMarketPerformance = (marketKey: string, years: 5 | 10) =>
-  request<MarketPerformanceResponse>(
-    `/api/market/${marketKey}/performance?years=${years}`,
+  request<MarketPerformanceResponse>(isStaticDataMode
+    ? `${baseUrl}data/market/${marketKey}/${years}.json`
+    : `/api/market/${marketKey}/performance?years=${years}`);
+
+export const fetchCompare = async (marketKeys: string[], years: 5 | 10) => {
+  if (!isStaticDataMode) {
+    return request<CompareResponse>(
+      `/api/markets/compare?countries=${marketKeys.join(",")}&years=${years}`,
+    );
+  }
+
+  const fullResponse = await request<CompareResponse>(
+    `${baseUrl}data/compare/${years}.json`,
   );
 
-export const fetchCompare = (marketKeys: string[], years: 5 | 10) =>
-  request<CompareResponse>(
-    `/api/markets/compare?countries=${marketKeys.join(",")}&years=${years}`,
-  );
+  return {
+    ...fullResponse,
+    countryKeys: marketKeys,
+    items: fullResponse.items.filter((item) => marketKeys.includes(item.countryKey)),
+  };
+};

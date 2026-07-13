@@ -124,7 +124,17 @@ export default function Home() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
           <SignalCard icon={Clock3} label="更新时点" value={compare ? formatDate(compare.updatedAt) : "--"} />
           <SignalCard icon={Layers3} label="已选国家" value={`${selectedCountries.length} 个`} />
-          <SignalCard icon={DatabaseZap} label="数据状态" value={compare?.dataStatus === "live" ? "实时拉取" : "--"} />
+          <SignalCard
+            icon={DatabaseZap}
+            label="数据状态"
+            value={
+              compare?.dataStatus === "live"
+                ? "实时拉取"
+                : compare?.dataStatus === "snapshot"
+                  ? "定时刷新"
+                  : "--"
+            }
+          />
           <SignalCard icon={Activity} label="指数数量" value={`${visibleItems.length} 条`} />
         </div>
       </section>

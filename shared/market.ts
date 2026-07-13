@@ -1,4 +1,6 @@
 export type SourceType = "official" | "proxy";
+export type DataStatus = "live" | "snapshot";
+export type LiveMode = "near_real_time" | "daily_snapshot";
 
 export type CountrySummary = {
   countryKey: string;
@@ -46,7 +48,7 @@ export type IndexOverview = IndexSummary & {
   sinceInceptionReturnPct: number;
   oneYearReturnPct: number | null;
   updatedAt: string;
-  liveMode: "near_real_time";
+  liveMode: LiveMode;
 };
 
 export type MarketPerformanceResponse = IndexOverview & {
@@ -56,7 +58,7 @@ export type MarketPerformanceResponse = IndexOverview & {
   yearly: YearPerformance[];
   timeline: TimelinePoint[];
   timelinePreview: TimelinePoint[];
-  dataStatus: "live";
+  dataStatus: DataStatus;
 };
 
 export type CompareItem = IndexOverview & {
@@ -68,7 +70,7 @@ export type CompareItem = IndexOverview & {
 export type MarketsResponse = {
   updatedAt: string;
   countries: CountryGroupSummary[];
-  dataStatus: "live";
+  dataStatus: DataStatus;
 };
 
 export type CompareResponse = {
@@ -76,5 +78,5 @@ export type CompareResponse = {
   countryKeys: string[];
   items: CompareItem[];
   updatedAt: string;
-  dataStatus: "live";
+  dataStatus: DataStatus;
 };
