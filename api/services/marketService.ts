@@ -1,5 +1,6 @@
 import { COUNTRY_GROUPS, INDEX_DATA } from "../data/marketData.ts";
 import { fetchYahooHistory, type PricePoint } from "./yahooChartService.ts";
+import { fetchEastmoneyHistory } from "./eastmoneyChartService.ts";
 import type {
   CompareItem,
   CompareResponse,
@@ -111,6 +112,18 @@ function yearsBetween(startDate: string, endDate: string) {
   return round((end - start) / (1000 * 60 * 60 * 24 * 365.25));
 }
 
+async function fetchIndexHistory(index: NonNullable<ReturnType<typeof findIndex>>) {
+  if (!index.eastmoneySecid) {
+    return fetchYahooHistory(index.yahooSymbol);
+  }
+
+  try {
+    return await fetchEastmoneyHistory(index.eastmoneySecid, index.symbol);
+  } catch {
+    return fetchYahooHistory(index.yahooSymbol);
+  }
+}
+
 async function buildIndexOverview(indexKey: string, years: 5 | 10) {
   const index = findIndex(indexKey);
 
@@ -118,7 +131,7 @@ async function buildIndexOverview(indexKey: string, years: 5 | 10) {
     return null;
   }
 
-  const history = await fetchYahooHistory(index.yahooSymbol);
+  const history = await fetchIndexHistory(index);
   const timeline = toMonthlyTimeline(history.points);
   const previewTimeline = toPreviewTimeline(timeline);
   const firstPoint = history.points[0];

@@ -6,6 +6,7 @@ import type {
 
 export type IndexConfig = IndexSummary & {
   yahooSymbol: string;
+  eastmoneySecid?: string;
 };
 
 export type CountryConfig = CountryGroupSummary & {
@@ -96,8 +97,9 @@ export const COUNTRY_GROUPS: CountryConfig[] = [
         indexKey: "cn_shanghai",
         displayName: "上证指数",
         benchmarkName: "Shanghai Composite Index",
-        symbol: "000001.SS",
+        symbol: "000001.SH",
         yahooSymbol: "000001.SS",
+        eastmoneySecid: "1.000001",
         sourceType: official,
         currency: "CNY",
         notes: "最常见的大盘观察口径，偏传统权重股。",
@@ -108,6 +110,7 @@ export const COUNTRY_GROUPS: CountryConfig[] = [
         benchmarkName: "Shenzhen Component Index",
         symbol: "399001.SZ",
         yahooSymbol: "399001.SZ",
+        eastmoneySecid: "0.399001",
         sourceType: official,
         currency: "CNY",
         notes: "更偏成长和制造链，可和上证形成风格对照。",
@@ -116,8 +119,9 @@ export const COUNTRY_GROUPS: CountryConfig[] = [
         indexKey: "cn_csi300",
         displayName: "沪深 300",
         benchmarkName: "CSI 300 Index",
-        symbol: "399300.SZ",
-        yahooSymbol: "399300.SZ",
+        symbol: "000300.SH",
+        yahooSymbol: "000300.SS",
+        eastmoneySecid: "1.000300",
         sourceType: official,
         currency: "CNY",
         notes: "机构最常用核心宽基之一，代表大盘核心资产。",
@@ -126,8 +130,9 @@ export const COUNTRY_GROUPS: CountryConfig[] = [
         indexKey: "cn_all_share",
         displayName: "中证全指",
         benchmarkName: "CSI All Share Index",
-        symbol: "000985.SS",
+        symbol: "000985.SH",
         yahooSymbol: "000985.SS",
+        eastmoneySecid: "1.000985",
         sourceType: official,
         currency: "CNY",
         notes: "更完整的 A 股整体口径，用来看全市场更合适。",
@@ -136,8 +141,9 @@ export const COUNTRY_GROUPS: CountryConfig[] = [
         indexKey: "cn_star50",
         displayName: "科创 50",
         benchmarkName: "STAR 50 Index",
-        symbol: "000688.SS",
+        symbol: "000688.SH",
         yahooSymbol: "000688.SS",
+        eastmoneySecid: "1.000688",
         sourceType: official,
         currency: "CNY",
         notes: "代表 A 股高研发和硬科技方向，波动通常更大。",

@@ -23,15 +23,17 @@ export type PricePoint = {
   close: number;
 };
 
+export type HistoricalSeries = {
+  firstTradeDate: string;
+  latestPrice: number;
+  latestPriceDate: string;
+  updatedAt: string;
+  points: PricePoint[];
+};
+
 type CachedValue = {
   expiresAt: number;
-  value: {
-    firstTradeDate: string;
-    latestPrice: number;
-    latestPriceDate: string;
-    updatedAt: string;
-    points: PricePoint[];
-  };
+  value: HistoricalSeries;
 };
 
 const cache = new Map<string, CachedValue>();
@@ -46,7 +48,7 @@ export async function fetchYahooHistory(
   symbol: string,
   interval = "1d",
   range = "max",
-) {
+): Promise<HistoricalSeries> {
   const cacheKey = buildCacheKey(symbol, interval, range);
   const now = Date.now();
   const cached = cache.get(cacheKey);
@@ -112,7 +114,7 @@ export async function fetchYahooHistory(
       ? new Date(result.meta.regularMarketTime * 1000).toISOString()
       : `${latestPoint.date}T00:00:00.000Z`;
 
-  const value = {
+  const value: HistoricalSeries = {
     firstTradeDate:
       typeof result.meta?.firstTradeDate === "number"
         ? new Date(result.meta.firstTradeDate * 1000).toISOString().slice(0, 10)
