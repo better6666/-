@@ -222,6 +222,66 @@ export const COUNTRY_GROUPS: CountryConfig[] = [
   ),
   createCountry(
     {
+      countryKey: "jp",
+      countryName: "日本",
+      displayName: "日本",
+      notes: "日本当前保留日经 225 和 TOPIX ETF 代理，兼顾价格型大盘与更宽市场口径。",
+    },
+    [
+      {
+        indexKey: "jp_nikkei225",
+        displayName: "日经 225",
+        benchmarkName: "Nikkei 225 Index",
+        symbol: "^N225",
+        yahooSymbol: "^N225",
+        sourceType: official,
+        currency: "JPY",
+        notes: "日本最常被引用的大盘指数，适合看核心龙头和出口周期。",
+      },
+      {
+        indexKey: "jp_topix_proxy",
+        displayName: "TOPIX 代理",
+        benchmarkName: "TOPIX ETF",
+        symbol: "1306.T",
+        yahooSymbol: "1306.T",
+        sourceType: proxy,
+        currency: "JPY",
+        notes: "用 ETF 代理更宽的日本股票市场口径，补足日经 225 的窄样本问题。",
+      },
+    ],
+  ),
+  createCountry(
+    {
+      countryKey: "kr",
+      countryName: "韩国",
+      displayName: "韩国",
+      notes: "韩国当前保留 KOSPI 和 KOSDAQ，分别观察大盘权重股与成长科技风格。",
+    },
+    [
+      {
+        indexKey: "kr_kospi",
+        displayName: "KOSPI",
+        benchmarkName: "Korea Composite Stock Price Index",
+        symbol: "^KS11",
+        yahooSymbol: "^KS11",
+        sourceType: official,
+        currency: "KRW",
+        notes: "韩国主板核心指数，适合观察三星等权重股驱动的大盘表现。",
+      },
+      {
+        indexKey: "kr_kosdaq",
+        displayName: "KOSDAQ",
+        benchmarkName: "KOSDAQ Index",
+        symbol: "^KQ11",
+        yahooSymbol: "^KQ11",
+        sourceType: official,
+        currency: "KRW",
+        notes: "韩国成长和中小盘风格更强，可与 KOSPI 形成风格对照。",
+      },
+    ],
+  ),
+  createCountry(
+    {
       countryKey: "au",
       countryName: "澳大利亚",
       displayName: "澳大利亚",

@@ -9,10 +9,12 @@ import {
 test("列出市场时返回首批覆盖市场", async () => {
   const result = await listMarkets();
 
-  assert.equal(result.countries.length, 7);
+  assert.equal(result.countries.length, 9);
   assert.equal(result.dataStatus, "live");
   assert.equal(result.countries[0]?.countryKey, "us");
   assert.ok((result.countries[0]?.indices.length ?? 0) > 1);
+  assert.ok(result.countries.some((country) => country.countryKey === "jp"));
+  assert.ok(result.countries.some((country) => country.countryKey === "kr"));
 });
 
 test("单市场接口返回发布以来与当前年度数据", async () => {
@@ -54,4 +56,14 @@ test("对比接口只返回请求到的市场", async () => {
   assert.deepEqual(result.countryKeys, ["tw", "vn"]);
   assert.ok(result.items.every((item) => ["tw", "vn"].includes(item.countryKey)));
   assert.ok(result.items[0]?.oneYearReturnPct !== undefined);
+});
+
+test("日本和韩国市场可以正常返回多指数", async () => {
+  const result = await compareMarkets(["jp", "kr"], 10);
+
+  assert.deepEqual(result.countryKeys, ["jp", "kr"]);
+  assert.ok(result.items.some((item) => item.indexKey === "jp_nikkei225"));
+  assert.ok(result.items.some((item) => item.indexKey === "jp_topix_proxy"));
+  assert.ok(result.items.some((item) => item.indexKey === "kr_kospi"));
+  assert.ok(result.items.some((item) => item.indexKey === "kr_kosdaq"));
 });

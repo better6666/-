@@ -8,7 +8,7 @@ type DashboardState = {
   setSelectedCountries: (countryKeys: string[]) => void;
 };
 
-const DEFAULT_COUNTRIES = ["us", "cn_a", "hk", "tw", "au", "mx", "vn"];
+const DEFAULT_COUNTRIES = ["us", "cn_a", "hk", "tw", "jp", "kr", "au", "mx", "vn"];
 
 export const useDashboardStore = create<DashboardState>((set) => ({
   years: 10,
