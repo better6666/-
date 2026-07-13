@@ -1,3 +1,6 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { COUNTRY_GROUPS, INDEX_DATA } from "../data/marketData.ts";
 import { fetchYahooHistory, type PricePoint } from "./yahooChartService.ts";
 import { fetchEastmoneyHistory } from "./eastmoneyChartService.ts";
@@ -10,6 +13,8 @@ import type {
   YearPerformance,
 } from "../../shared/market.ts";
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const fallbackMarketDir = path.resolve(__dirname, "../data/fallback-market");
 const round = (value: number) => Number(value.toFixed(2));
 
 function findIndex(indexKey: string) {
@@ -112,6 +117,20 @@ function yearsBetween(startDate: string, endDate: string) {
   return round((end - start) / (1000 * 60 * 60 * 24 * 365.25));
 }
 
+function hasEnoughHistory(points: PricePoint[], minimumPoints = 30) {
+  return points.length >= minimumPoints;
+}
+
+async function loadFallbackMarketPerformance(indexKey: string, years: 5 | 10) {
+  try {
+    const filePath = path.join(fallbackMarketDir, indexKey, `${years}.json`);
+    const content = await readFile(filePath, "utf8");
+    return JSON.parse(content) as MarketPerformanceResponse;
+  } catch {
+    return null;
+  }
+}
+
 async function fetchIndexHistory(index: NonNullable<ReturnType<typeof findIndex>>) {
   if (!index.eastmoneySecid) {
     return fetchYahooHistory(index.yahooSymbol);
@@ -119,8 +138,18 @@ async function fetchIndexHistory(index: NonNullable<ReturnType<typeof findIndex>
 
   try {
     return await fetchEastmoneyHistory(index.eastmoneySecid, index.symbol);
-  } catch {
-    return fetchYahooHistory(index.yahooSymbol);
+  } catch (eastmoneyError) {
+    const yahooHistory = await fetchYahooHistory(index.yahooSymbol);
+
+    if (hasEnoughHistory(yahooHistory.points)) {
+      return yahooHistory;
+    }
+
+    throw new Error(
+      `${index.displayName} 历史数据不足：东方财富不可用，Yahoo 仅返回 ${yahooHistory.points.length} 个点。原始错误：${
+        eastmoneyError instanceof Error ? eastmoneyError.message : String(eastmoneyError)
+      }`,
+    );
   }
 }
 
@@ -215,7 +244,14 @@ export async function getMarketPerformance(
   indexKey: string,
   years: 5 | 10,
 ): Promise<MarketPerformanceResponse | null> {
-  const overview = await buildIndexOverview(indexKey, years);
+  let overview: Awaited<ReturnType<typeof buildIndexOverview>>;
+
+  try {
+    overview = await buildIndexOverview(indexKey, years);
+  } catch {
+    const fallback = await loadFallbackMarketPerformance(indexKey, years);
+    return fallback;
+  }
 
   if (!overview) {
     return null;
@@ -236,42 +272,48 @@ export async function compareMarkets(
     countryKeys.includes(country.countryKey),
   ).flatMap((country) => country.indices.map((index) => index.indexKey));
 
-  const results = await Promise.all(indexKeys.map((indexKey) => buildIndexOverview(indexKey, years)));
+  const results = await Promise.all(
+    indexKeys.map((indexKey) => getMarketPerformance(indexKey, years)),
+  );
 
-  const items = results
-    .filter((item): item is NonNullable<typeof item> => Boolean(item))
-    .map<CompareItem>((item) => ({
-      indexKey: item.indexKey,
-      countryKey: item.countryKey,
-      countryName: item.countryName,
-      countryDisplayName: item.countryDisplayName,
-      displayName: item.displayName,
-      benchmarkName: item.benchmarkName,
-      symbol: item.symbol,
-      sourceType: item.sourceType,
-      currency: item.currency,
-      notes: item.notes,
-      inceptionDate: item.inceptionDate,
-      latestPrice: item.latestPrice,
-      latestPriceDate: item.latestPriceDate,
-      sinceInceptionReturnPct: item.sinceInceptionReturnPct,
-      oneYearReturnPct: item.oneYearReturnPct,
-      updatedAt: item.updatedAt,
-      liveMode: item.liveMode,
-      latestAnnualReturnPct: item.latestAnnualReturnPct,
-      yearly: item.yearly.map(({ year, annualReturnPct, isYtd }) => ({
-        year,
-        annualReturnPct,
-        isYtd,
-      })),
-      timelinePreview: item.timelinePreview,
-    }));
+  const performances = results.filter(
+    (item): item is NonNullable<typeof item> => Boolean(item),
+  );
+
+  const items = performances.map<CompareItem>((item) => ({
+    indexKey: item.indexKey,
+    countryKey: item.countryKey,
+    countryName: item.countryName,
+    countryDisplayName: item.countryDisplayName,
+    displayName: item.displayName,
+    benchmarkName: item.benchmarkName,
+    symbol: item.symbol,
+    sourceType: item.sourceType,
+    currency: item.currency,
+    notes: item.notes,
+    inceptionDate: item.inceptionDate,
+    latestPrice: item.latestPrice,
+    latestPriceDate: item.latestPriceDate,
+    sinceInceptionReturnPct: item.sinceInceptionReturnPct,
+    oneYearReturnPct: item.oneYearReturnPct,
+    updatedAt: item.updatedAt,
+    liveMode: item.liveMode,
+    latestAnnualReturnPct: item.latestAnnualReturnPct,
+    yearly: item.yearly.map(({ year, annualReturnPct, isYtd }) => ({
+      year,
+      annualReturnPct,
+      isYtd,
+    })),
+    timelinePreview: item.timelinePreview,
+  }));
 
   return {
     years,
     countryKeys,
     items,
     updatedAt: new Date().toISOString(),
-    dataStatus: "live",
+    dataStatus: performances.some((item) => item.dataStatus === "snapshot")
+      ? "snapshot"
+      : "live",
   };
 }

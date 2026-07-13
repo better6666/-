@@ -1,3 +1,5 @@
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import type { HistoricalSeries, PricePoint } from "./yahooChartService.ts";
 
 type EastmoneyResponse = {
@@ -16,6 +18,7 @@ type CachedValue = {
 
 const cache = new Map<string, CachedValue>();
 const TTL_MS = 1000 * 60 * 5;
+const execFileAsync = promisify(execFile);
 
 const round = (value: number) => Number(value.toFixed(2));
 
@@ -34,6 +37,42 @@ function parseKlinePoint(kline: string): PricePoint | null {
   };
 }
 
+function buildEastmoneyUrl(secid: string) {
+  return `https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=${encodeURIComponent(secid)}&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57,f58&klt=101&fqt=0&beg=0&end=20500000`;
+}
+
+async function requestByFetch(url: string) {
+  const response = await fetch(url, {
+    headers: {
+      "User-Agent": "Mozilla/5.0",
+      Accept: "application/json",
+      Referer: "https://quote.eastmoney.com/",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`东方财富行情源请求失败：${response.status}`);
+  }
+
+  return (await response.json()) as EastmoneyResponse;
+}
+
+async function requestByCurl(url: string) {
+  const { stdout } = await execFileAsync("curl", [
+    "-L",
+    "-s",
+    "-H",
+    "User-Agent: Mozilla/5.0",
+    "-H",
+    "Accept: application/json",
+    "-H",
+    "Referer: https://quote.eastmoney.com/",
+    url,
+  ]);
+
+  return JSON.parse(stdout) as EastmoneyResponse;
+}
+
 export async function fetchEastmoneyHistory(secid: string, symbol: string) {
   const cacheKey = `eastmoney:${secid}`;
   const now = Date.now();
@@ -43,22 +82,15 @@ export async function fetchEastmoneyHistory(secid: string, symbol: string) {
     return cached.value;
   }
 
-  const response = await fetch(
-    `https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=${encodeURIComponent(secid)}&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57,f58&klt=101&fqt=0&beg=0&end=20500000`,
-    {
-      headers: {
-        "User-Agent": "Mozilla/5.0",
-        Accept: "application/json",
-        Referer: "https://quote.eastmoney.com/",
-      },
-    },
-  );
+  const url = buildEastmoneyUrl(secid);
+  let payload: EastmoneyResponse;
 
-  if (!response.ok) {
-    throw new Error(`东方财富行情源请求失败：${response.status}`);
+  try {
+    payload = await requestByFetch(url);
+  } catch {
+    payload = await requestByCurl(url);
   }
 
-  const payload = (await response.json()) as EastmoneyResponse;
   const rawPoints = payload.data?.klines ?? [];
   const points = rawPoints
     .map((item) => parseKlinePoint(item))

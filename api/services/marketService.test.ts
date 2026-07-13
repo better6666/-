@@ -26,13 +26,25 @@ test("单市场接口返回发布以来与当前年度数据", async () => {
 });
 
 test("A 股宽基指数返回完整长历史", async () => {
-  const result = await getMarketPerformance("cn_csi300", 10);
+  const result = await getMarketPerformance("cn_shanghai", 10);
 
   assert.ok(result);
-  assert.equal(result?.symbol, "000300.SH");
+  assert.equal(result?.symbol, "000001.SH");
   assert.ok((result?.timeline.length ?? 0) > 200);
   assert.ok((result?.yearsListed ?? 0) > 10);
   assert.ok((result?.latestPrice ?? 0) > 0);
+});
+
+test("A 股中证全指和科创50不应退化为单点历史", async () => {
+  const allShare = await getMarketPerformance("cn_all_share", 10);
+  const star50 = await getMarketPerformance("cn_star50", 10);
+
+  assert.ok(allShare);
+  assert.ok(star50);
+  assert.ok((allShare?.timeline.length ?? 0) > 30);
+  assert.ok((star50?.timeline.length ?? 0) > 30);
+  assert.ok((allShare?.sinceInceptionReturnPct ?? 0) !== 0);
+  assert.ok((star50?.sinceInceptionReturnPct ?? 0) !== 0);
 });
 
 test("对比接口只返回请求到的市场", async () => {
