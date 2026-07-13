@@ -6,7 +6,7 @@ import MarketDetail from "@/pages/MarketDetail";
 
 export default function App() {
   return (
-    <HashRouter basename={import.meta.env.BASE_URL}>
+    <HashRouter>
       <AppShell>
         <Routes>
           <Route path="/" element={<Home />} />
